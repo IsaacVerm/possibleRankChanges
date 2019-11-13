@@ -1,0 +1,13 @@
+Package: possibleRankChanges
+Title: Code to create graph showing possible rank changes in league
+Version: 0.0.0.9000
+Authors@R: 
+    person(given = "Isaac",
+           family = "Verminck",
+           role = c("aut", "cre"),
+           email = "isaacverm@gmail.com",
+           comment = c(ORCID = "YOUR-ORCID-ID"))
+Description: Code to create graph showing possible rank changes in league. Inspired by graph found at r/dataisbeautiful.
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
