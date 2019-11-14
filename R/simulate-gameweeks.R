@@ -38,3 +38,11 @@ simulate_possible_gameweeks <- function(upcoming_games,
                             possible_gameweek_points,
                             gameweek)
 }
+
+to_long_gameweeks <- function(gameweeks) {
+  gameweeks %>%
+    purrr::map(function(gameweek) {
+      data.frame(team = c(gameweek$home_team, gameweek$away_team),
+                 points = c(gameweek$home_points, gameweek$away_points))
+    })
+}
