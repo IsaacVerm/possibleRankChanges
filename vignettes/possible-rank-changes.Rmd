@@ -7,8 +7,17 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+Standard chunk options except for:
+
+- caching which is enabled
+- warnings are disabled
+
+Some warnings are just about the coercion of for example integers into character vectors. These warnings are not relevant before transforming so better not to let them pollute the report.
+
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
+  cache = TRUE,
+  warning = FALSE,
   collapse = TRUE,
   comment = "#>"
 )
@@ -64,6 +73,7 @@ To get the current league table we first have to get the results of all games pl
 - away team name
 - home score
 - away score
+- gameweek
 
 Let's first see if we can make it work for a single game. 138921 is the season id of the current season.
 
@@ -74,6 +84,8 @@ get_matchdays(gameweek_id = "1", season_id = "138921") %>%
   parse_game_result
   
 ```
+
+Note `parse_game_result` contains a check to see if the game actually took place. Games can be postponed in which case only the team names and gameweek will be available but there obviously won't be any score info.
 
 If we want to scale things up it helps to think about the sequence:
 
@@ -88,13 +100,20 @@ We don't bother with lists or vectors but directly return the game results in a 
 Functions containing `all` in their name are iterating functions. `parse_all_games` also flattens. If not we end up with a list of games within a list of responses. We don't care about this structure but just about the games themselves so it makes sense to [remove a level of hierarchy](https://purrr.tidyverse.org/reference/flatten.html).
 
 ```{r}
-gameweek_ids <- c("1","2")
+gameweek_ids <- seq(from = 1, to = 15) %>% as.character
 season_id <- "138921"
 
-gameweek_ids %>%
+list_game_results <- gameweek_ids %>%
   get_all_matchdays(season_id) %>% 
   parse_all_games %>% 
   parse_all_game_results
+```
+
+We get a list of game results but would rather have them all merged in a single dataframe. Makes it easier to apply `tidyverse` functions to it.
+
+```{r}
+game_results <- list_game_results %>% 
+  game_results_to_df
 ```
 
 

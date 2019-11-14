@@ -18,4 +18,5 @@ VignetteBuilder: knitr
 Imports: 
     httr,
     purrr,
-    magrittr
+    magrittr,
+    dplyr

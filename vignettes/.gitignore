@@ -1,2 +1,3 @@
 *.html
 *.R
+possible-rank-changes_cache/*

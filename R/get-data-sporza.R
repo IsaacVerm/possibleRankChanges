@@ -22,11 +22,18 @@ parse_all_games <- function(matchdays_responses) {
     purrr::flatten()
 }
 
+game_took_place <- function(game) {
+  exists("homeTeam", where = game) & exists("homeScore", where = game)
+}
+
 parse_game_result <- function(game) {
-  data.frame(home_team = game$homeTeam$name,
-             away_team = game$awayTeam$name,
-             home_score = game$homeScore,
-             away_score = game$awayScore)
+  if (game_took_place(game)) {
+    data.frame(home_team = game$homeTeam$name,
+               away_team = game$awayTeam$name,
+               home_score = game$homeScore,
+               away_score = game$awayScore,
+               gameweek = game$roundNr)
+  }
 }
 
 parse_all_game_results <- function(games) {
