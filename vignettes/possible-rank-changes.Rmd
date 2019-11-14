@@ -16,6 +16,7 @@ knitr::opts_chunk$set(
 
 ```{r setup}
 library(possibleRankChanges)
+library(magrittr)
 ```
 
 # Inspiration
@@ -64,4 +65,38 @@ To get the current league table we first have to get the results of all games pl
 - home score
 - away score
 
-We don't bother with lists or vectors but directly put the game in a dataframe format. This might make things less efficient but it greatly helps in making the code understandable.
+Let's first see if we can make it work for a single game. 138921 is the season id of the current season.
+
+```{r}
+get_matchdays(gameweek_id = "1", season_id = "138921") %>% 
+  parse_games %>% 
+  .[[1]] %>% # just focus on a single game at the moment
+  parse_game_result
+  
+```
+
+If we want to scale things up it helps to think about the sequence:
+
+- get responses of all matchdays
+- parse all the games of each matchday
+- parse the results of all game
+
+As you can see all is mentioned thrice meaning there's thrice times a need for iteration. [purrr](https://purrr.tidyverse.org/) is very convenient for this. 
+
+We don't bother with lists or vectors but directly return the game results in a dataframe format. This might make things less efficient but it greatly helps in making the code understandable.
+
+Functions containing `all` in their name are iterating functions. `parse_all_games` also flattens. If not we end up with a list of games within a list of responses. We don't care about this structure but just about the games themselves so it makes sense to [remove a level of hierarchy](https://purrr.tidyverse.org/reference/flatten.html).
+
+```{r}
+gameweek_ids <- c("1","2")
+season_id <- "138921"
+
+gameweek_ids %>%
+  get_all_matchdays(season_id) %>% 
+  parse_all_games %>% 
+  parse_all_game_results
+```
+
+
+
+
