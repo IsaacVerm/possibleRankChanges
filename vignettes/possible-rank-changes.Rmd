@@ -56,3 +56,12 @@ An endpoint exists to get the games in a gameweek (`/matchdays/{seasonId}/{gamew
 I'm most used to using the `requests` package in Python for making API calls. Since gathering the data is only a small part of this package I opted to stay within the R ecosystem. [httr](https://cran.r-project.org/web/packages/httr/vignettes/quickstart.html) is an R package inspired by `requests`.
 
 ## Current league table
+
+To get the current league table we first have to get the results of all games played up till now (gameweek 15). For each game we get:
+
+- home team name
+- away team name
+- home score
+- away score
+
+We don't bother with lists or vectors but directly put the game in a dataframe format. This might make things less efficient but it greatly helps in making the code understandable.
