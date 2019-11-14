@@ -1,5 +1,5 @@
 ---
-title: "possible-rank-changes"
+title: "Possible rank changes next gameweek Jupiler Pro League"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{possible-rank-changes}
@@ -168,6 +168,14 @@ This matches what can be found on the Sporza site.
 
 There are some small discrepancies in case of a rank tie. This does not matter at the moment.
 
+The graph will be about changes in rank so naturally we have to add the rank.
+
+```{r}
+league_table <- league_table %>% 
+  add_rank()
+```
+
+
 ## Upcoming games
 
 The first part of getting the data is done by creating the league table. The second part of getting the upcoming games is made a lot easier since most of the functions used have been written already. We just have to add a function `parse_upcoming_game` to get a limited version of the game info (because by definition there won't be a score yet).
@@ -197,11 +205,82 @@ Now on to the fun part. Let's simulate all the league tables possibles for the n
 
 This is a case of a [permutation with repetition](https://www.r-bloggers.com/learning-r-permutations-and-combinations-with-base-r/). Permutation because the order in which we pick win, draw or loss matters. It's repetition because the same outcome (win, draw or loss) can be picker several times (the results of matches are of course independent).
 
+The implementation of the simulation is abstracted away. Running the simulation can take a bit of time since after all 6561 dataframes have to be created.
+
 ```{r}
-possible_gameweek_points <- create_possible_gameweek_points(8)
+possible_gameweeks <- simulate_possible_gameweeks(upcoming_games,
+                                                  16)
 ```
 
-Each row of the possible gameweek points is the home points column of a possible league outcome.
+Now these gameweeks are in a format where you still have a home and away team. However, we'd like to have a more simple format in which there is just a team and its points received. 
 
+```{r}
+possible_points_by_team <- possible_gameweeks %>% 
+  calculate_possible_points_by_team
+```
 
+Most of the moving elements are present now:
 
+- the current league table
+- the possible points by team for the upcoming gameweek
+
+What's left is to join these possible point distributions with the current league table. We make sure to return the result as a dataframe instead of a list to easily find the worst and best rank in the next paragraphs.
+
+```{r}
+possible_league_tables <- simulate_possible_league_tables(league_table,
+                                                          possible_points_by_team)
+```
+
+Note [min_rank](https://dplyr.tidyverse.org/reference/ranking.html) is used. This is not the same ranking system used traditionally for league tables. However, I don't have any way to resolve ties in a deterministic way (since I don't keep goal difference into acccount) so this was the second best option.
+
+Just as with the original league table we'd like to work with a single dataframe. We can just merge everything together since we're interested in the worst and best rank by team and we know there's just 1 team by possible league table.
+
+```{r}
+possible_league_tables <- possible_league_tables %>% 
+  league_tables_to_df
+```
+
+This also calculates the rank after the simulated game. Now let's calculate the difference between the old and new rank.
+
+```{r}
+possible_league_tables <- possible_league_tables %>% 
+  add_rank_difference
+```
+
+# Pick worst and best rank change per team
+
+Based on the rank difference we can pick the biggest drop and biggest increase in rank per team.
+
+We create a new table with:
+
+- the old rank
+- the biggest drop in rank
+- the biggest increase in rank
+
+```{r}
+rank_table <- create_rank_table(league_table,
+                                possible_league_tables)
+```
+
+# Visualize
+
+Right now we have the data in the format we need in the rank table.
+
+I chose to have vertical bars instead of horizontal ones as in the original. Intuitively it doesn't change your perception of the graph but since the graph is wider than it's high there's more place to put the team names at the bottom.
+
+Also added a bit of horizontal adjustment to the team labels to have them closer to the x axis.
+
+An issue arises when a club has no upward or downward potential for the next game. For example Club Brugge is 5 points ahead while being in the top spot. There's no way they can drop a rank and when you're number one you can't climb higher of course. So on the graph there would be no line to display. That's why the current rank is displayed as well.
+
+```{r}
+rank_table %>% 
+  plot_rank_changes
+```
+
+As you can notice some teams start off with the same rank. This is because I couldn't resolve ties as mentioned above. You can also notice the biggest gaps between lowest and highest possible rank are in the middle. This makes sense because in the middle you have both upwards and downwards potential and I the way points are distributed across teams helps as well.
+
+```{r}
+league_table %>% 
+  plot_points_histogram()
+```
+ 
