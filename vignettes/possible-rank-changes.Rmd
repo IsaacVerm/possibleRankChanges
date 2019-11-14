@@ -1,0 +1,58 @@
+---
+title: "possible-rank-changes"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{possible-rank-changes}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(possibleRankChanges)
+```
+
+# Inspiration
+
+I've been looking for some time to:
+
+- reproduce an interesting graph in `ggplot2`
+- do some analysis around sports
+
+Stumbled upon [this post](https://www.reddit.com/r/dataisbeautiful/comments/a9n0rv/this_season_ive_been_creating_these_possible/) on r/dataisbeautiful and it seemed like a very fitting candidate. It's immediately clear what the data is telling you even though it's about intervals. 
+
+However, I'd like to adapt it in a couple of ways:
+
+- use data of Belgian Jupiler Pro League instead of Premier League
+- not bother with form, points, ... (detracts from the main point)
+- make it more dynamic with several gameweeks
+
+# Steps
+
+Roughly these are the steps to take:
+
+- get data
+  - league table at this moment
+  - upcoming games till the end of the season
+- calculate possible minimum and max rank next games
+- visualize
+
+Let's start off simple as in the Reddit post by just focusing on the next game. If the code is written the right way it will be easy later on to make it more dynamic.
+
+# Get data
+
+Data can be found at [Sporza](https://sporza.be/nl/categorie/voetbal/jupiler-pro-league/). Sporza doesn't have its own official API but has an official one called at `https://api.sporza.be`. You can discover it for yourself by using for example the Chrome DevTools.
+
+![](matchdays-endpoint-sporza.png)
+
+An endpoint exists to get the games in a gameweek (`/matchdays/{seasonId}/{gameweekId}`). There's no endpoint to get the league table. Since a league table is not too dynamic (you don't often scroll back to previous gameweeks to see what the table looked like at that moment) it's part of the HTML request. Instead of trying to parse this HTML I opted to reconstruct the league table based on the games played. That way I only have to focus on the `/matchdays` endpoint.
+
+I'm most used to using the `requests` package in Python for making API calls. Since gathering the data is only a small part of this package I opted to stay within the R ecosystem. [httr](https://cran.r-project.org/web/packages/httr/vignettes/quickstart.html) is an R package inspired by `requests`.
+
+## Current league table

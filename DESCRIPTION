@@ -11,3 +11,7 @@ Description: Code to create graph showing possible rank changes in league. Inspi
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
+Suggests: 
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
