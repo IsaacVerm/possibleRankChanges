@@ -12,10 +12,15 @@ simulate_possible_league_tables <-
                          y = points_per_team,
                          by = "team") %>%
           dplyr::mutate(new_total_points = total_points + points) %>%
-          add_new_rank
+          add_new_rank()
       })
   }
 
 league_tables_to_df <- function(league_tables) {
   dplyr::bind_rows(league_tables)
+}
+
+add_rank_difference <- function(simulated_leagues_table) {
+  simulated_leagues_table %>%
+    dplyr::mutate(rank_difference = rank - new_rank)
 }
