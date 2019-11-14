@@ -50,7 +50,8 @@ Roughly these are the steps to take:
 - get data
   - league table at this moment
   - upcoming games till the end of the season
-- calculate possible minimum and max rank next games
+- simulate all the different game outcomes possible
+- pick the best and worst outcome per team
 - visualize
 
 Let's start off simple as in the Reddit post by just focusing on the next game. If the code is written the right way it will be easy later on to make it more dynamic.
@@ -66,6 +67,8 @@ An endpoint exists to get the games in a gameweek (`/matchdays/{seasonId}/{gamew
 I'm most used to using the `requests` package in Python for making API calls. Since gathering the data is only a small part of this package I opted to stay within the R ecosystem. [httr](https://cran.r-project.org/web/packages/httr/vignettes/quickstart.html) is an R package inspired by `requests`.
 
 ## Current league table
+
+### Game results up till now
 
 To get the current league table we first have to get the results of all games played up till now (gameweek 15). For each game we get:
 
@@ -113,9 +116,82 @@ We get a list of game results but would rather have them all merged in a single 
 
 ```{r}
 game_results <- list_game_results %>% 
-  game_results_to_df
+  games_to_df
 ```
 
+Let's make quick check. We asked for 15 gameweeks. There are 16 teams in competition meaning 8 games per gameweek.
 
+```{r}
+game_results %>%
+  dplyr::group_by(gameweek) %>%
+  dplyr::summarise(n = n())
+```
 
+We get what we except for gameweek 5 in which only 6 games were played. This is correct since 2 games were postponed:
+
+![](postponed-games-gameweek-5.png)
+
+### Create league table
+
+Now we have the results of all the games played so far. Let's count the total points by team to get the league table.
+
+First step is to add the home points and away points variables. Right now we just have the score (goals scored for home and away teams) but no info about the points distributed at the end of the game.
+
+```{r}
+game_results <- game_results %>% 
+  add_home_points %>% 
+  add_away_points
+```
+
+As an intermediate step we create 2 league tables: one for home, one for away.
+
+```{r}
+home_league_table <- game_results %>%
+  create_home_league_table
+away_league_table <- game_results %>%
+  create_away_league_table
+```
+
+These can be merged into a single league table.
+
+```{r}
+league_table <- create_league_table(home_league_table,
+                                    away_league_table)
+
+print(league_table %>%
+        dplyr::arrange(desc(total_points)))
+```
+
+This matches what can be found on the Sporza site.
+
+![](sporza-league-table-gameweek-15.png)
+
+There are some small discrepancies in case of a rank tie. This does not matter at the moment.
+
+## Upcoming games
+
+The first part of getting the data is done by creating the league table. The second part of getting the upcoming games is made a lot easier since most of the functions used have been written already. We just have to add a function `parse_upcoming_game` to get a limited version of the game info (because by definition there won't be a score yet).
+
+```{r}
+upcoming_gameweek_ids <- seq(from = 16, to = 30) %>% as.character
+season_id <- "138921"
+
+list_upcoming_games <- upcoming_gameweek_ids %>%
+  get_all_matchdays(season_id) %>% 
+  parse_all_games %>% 
+  parse_all_upcoming_games
+```
+
+There's some duplication in code between the `parse_game_result` and `parse_upcoming_game` functions. Refactoring might take some time and things are still pretty clear at the moment so I leave it at that.
+
+Once again merge the list of dataframes into a single dataframe.
+
+```{r}
+upcoming_games <- list_upcoming_games %>% 
+  games_to_df
+```
+
+# Simulate game outcomes
+
+Now on to the fun part. Let's simulate all the league tables possibles for the next game. The Jupiler League has 16 teams so there are as mentioned above 8 games per gameweek. Each game has 3 possible outcomes: win, draw or loss. This means we have to simulate 3 ** 8 different league table outcomes for the next gameweek. So 6561 possible league tables.
 
