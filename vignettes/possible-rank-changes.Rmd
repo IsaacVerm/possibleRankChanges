@@ -191,7 +191,17 @@ upcoming_games <- list_upcoming_games %>%
   games_to_df
 ```
 
-# Simulate game outcomes
+# Simulate league outcomes
 
 Now on to the fun part. Let's simulate all the league tables possibles for the next game. The Jupiler League has 16 teams so there are as mentioned above 8 games per gameweek. Each game has 3 possible outcomes: win, draw or loss. This means we have to simulate 3 ** 8 different league table outcomes for the next gameweek. So 6561 possible league tables.
+
+This is a case of a [permutation with repetition](https://www.r-bloggers.com/learning-r-permutations-and-combinations-with-base-r/). Permutation because the order in which we pick win, draw or loss matters. It's repetition because the same outcome (win, draw or loss) can be picker several times (the results of matches are of course independent).
+
+```{r}
+possible_gameweek_points <- create_possible_gameweek_points(8)
+```
+
+Each row of the possible gameweek points is the home points column of a possible league outcome.
+
+
 
