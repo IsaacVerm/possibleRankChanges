@@ -40,3 +40,14 @@ parse_all_game_results <- function(games) {
   games %>%
     purrr::map(parse_game_result)
 }
+
+parse_upcoming_game <- function(game) {
+  data.frame(home_team = game$homeTeam$name,
+             away_team = game$awayTeam$name,
+             gameweek = game$roundNr)
+}
+
+parse_all_upcoming_games <- function(games) {
+  games %>%
+    purrr::map(parse_upcoming_game)
+}
